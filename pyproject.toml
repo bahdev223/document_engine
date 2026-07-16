@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "campus-doc-engine"
+version = "0.1.0"
+description = "Document Intelligence Engine — extraction, analyse et construction de documents pédagogiques"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = [
+    "pymupdf>=1.25.0",
+    "pdfplumber>=0.11.0",
+    "python-docx>=1.1.0",
+    "python-pptx>=1.0.0",
+    "pillow>=11.0.0",
+    "markdown-it-py>=3.0.0",
+    "lxml>=5.0.0",
+    "httpx>=0.28.0",
+]
+
+[project.optional-dependencies]
+ai = ["openai>=1.0.0"]
+cli = ["typer>=0.15.0"]
+dev = ["pytest>=8.0.0", "pytest-asyncio>=0.24.0", "coverage>=7.0.0"]
+
+[project.scripts]
+doc-engine = "document_engine.cli.main:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["document_engine"]
