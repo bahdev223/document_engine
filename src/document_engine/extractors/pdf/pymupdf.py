@@ -5,7 +5,7 @@ from pathlib import Path
 import fitz  # PyMuPDF
 
 from document_engine.models import (
-    Document, ImageElement, Link,
+    Document, ImageElement, Link, DocumentStatistics,
 )
 from document_engine.core.registry import Extractor, register_extractor
 
@@ -73,8 +73,25 @@ class PyMuPDFExtractor(Extractor):
                     is_internal=link.get("kind") == fitz.LINK_GOTO,
                 ))
 
+        page_count = len(doc)
         document.text = "\n".join(full_text)
         doc.close()
+        is_scanned = page_count > 0 and len(document.text.strip()) == 0
+        document.raw_metadata["is_scanned"] = is_scanned
+        if is_scanned:
+            document.errors.append("Document scanné — OCR nécessaire")
+        document.statistics = DocumentStatistics(
+            page_count=page_count,
+            total_words=len(document.text.split()),
+            total_images=len(document.images),
+            total_tables=0,
+            total_code_blocks=0,
+            total_math_formulas=0,
+            total_links=len(document.links),
+            total_chapters=0,
+            ocr_required=is_scanned,
+            language=None,
+        )
         return document
 
     def extract_text(self, file_path: str) -> str:

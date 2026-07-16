@@ -31,4 +31,5 @@ class PDFPlumberExtractor(Extractor):
         return [t.__dict__ for t in results]
 
 
-register_extractor(PDFPlumberExtractor())
+# Ne pas enregistrer comme extracteur principal (pdfplumber n'extrait que les tableaux)
+# PyMuPDFExtractor est l'extracteur PDF principal.

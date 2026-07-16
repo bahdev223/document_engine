@@ -111,6 +111,7 @@ class Pipeline:
 
     def _compute_statistics(self, document: Document):
         chapters = document.flat_chapters()
+        is_scanned = document.raw_metadata.get("is_scanned", False)
         document.statistics = DocumentStatistics(
             page_count=document.raw_metadata.get("page_count", 0),
             total_words=sum(c.word_count for c in chapters) or len(document.text.split()),
@@ -122,4 +123,5 @@ class Pipeline:
             total_chapters=len(chapters),
             has_toc=bool(document.chapters),
             language=document.language,
+            ocr_required=is_scanned,
         )
