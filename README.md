@@ -1,30 +1,53 @@
-# Document Engine
+# Document Intelligence Engine
 
-Moteur universel de traitement documentaire. Extrait, analyse et transforme des documents (PDF, Word, PowerPoint, EPUB) en contenu structuré.
+Moteur universel de traitement documentaire. Extrait, analyse et transforme des documents (PDF, DOCX, PPTX, EPUB, HTML, Markdown) en données structurées.
 
-## Philosophie
+```python
+from document_engine import Engine
 
-L'IA n'est pas le moteur. L'IA est l'expert qui valide et ameliore.
+engine = Engine()
+doc = engine.load("cours.pdf")
+
+print(doc.statistics)
+# → page_count=248, total_words=45200, total_images=38, total_tables=12
+
+for chapter in doc.chapters:
+    print(f"{chapter.title} — {chapter.word_count} mots / {len(chapter.images)} images")
+```
+
+## Architecture
 
 ```
-Document -> Extraction -> Analyse -> Construction -> Validation IA -> Export
+Document
+  ↓
+Détection du format
+  ↓
+Extraction (PDF/Word/PPT/EPUB/HTML/MD)
+  ↓
+Analyse (chapitres, titres, code, formules, langue, stats)
+  ↓
+Export (JSON, Markdown, HTML)
+  ↓
+Review IA (optionnel)
+  ↓
+Document structuré
 ```
-
-Chaque etape est un outil independant. L'IA intervient en dernier, sur un document deja structure.
 
 ## Installation
 
 ```bash
-pip install -e .
+pip install campus-doc-engine
 ```
 
 Avec support IA :
 
 ```bash
-pip install -e ".[ai]"
+pip install campus-doc-engine[ai]
 ```
 
 ## Utilisation
+
+### Pipeline complète
 
 ```python
 from document_engine import Pipeline
@@ -32,62 +55,74 @@ from document_engine import Pipeline
 pipeline = Pipeline()
 result = pipeline.import_document("cours.pdf")
 
-print(result.document.statistics)
-print(result.document.chapters)
-print(result.document.images)
+doc = result.document
+print(f"Titre: {doc.title}")
+print(f"Pages: {doc.statistics.page_count}")
+print(f"Chapitres: {len(doc.chapters)}")
 ```
 
-## Architecture
-
-```
-document_engine/
-    core/           Pipeline, Document, Registry
-    extractors/     PDF, Word, PowerPoint, EPUB, HTML, Markdown
-    analyzers/      Chapitres, titres, langue, code, formules
-    builders/       TipTap, Markdown, HTML, JSON
-    ai/             DeepSeek, OpenAI (facultatif)
-    cli/            Interface en ligne de commande
-```
-
-### Objet Document
-
-Tous les outils lisent et ecrivent dans un seul objet :
+### Extraction seule
 
 ```python
-document.text           # Texte brut
-document.images         # Images extraites
-document.tables         # Tableaux detectes
-document.chapters       # Chapitres structures
-document.code_blocks    # Blocs de code
-document.formulas       # Formules mathematiques
-document.links          # Liens
-document.statistics     # Statistiques du document
-document.language       # Langue detectee
+from document_engine.extractors.pdf import PyMuPDFExtractor
+
+extractor = PyMuPDFExtractor()
+doc = extractor.extract("cours.pdf")
+print(f"Texte extrait: {len(doc.text)} caractères")
+print(f"Images: {len(doc.images)}")
 ```
 
-### Plugins
-
-Chaque format est un plugin independant :
+### Analyse
 
 ```python
-from document_engine.core.registry import Extractor, register_extractor
+from document_engine.analyzers import ChapterAnalyzer, LanguageAnalyzer
 
-class MonExtracteur(Extractor):
-    format = "xyz"
+lang = LanguageAnalyzer().analyze(doc)
+print(f"Langue: {lang['language']} (confiance: {lang['confidence']})")
 
-    def extract(self, file_path: str) -> Document:
-        ...
-
-register_extractor(MonExtracteur())
+chapters = ChapterAnalyzer().analyze(doc)
+print(f"Chapitres détectés: {chapters['count']}")
 ```
 
-## CLI
+### Export
+
+```python
+from document_engine.exporters import JSONExporter, MarkdownExporter, HTMLExporter
+
+json_data = JSONExporter().build(doc)
+markdown = MarkdownExporter().build(doc)
+html = HTMLExporter().build(doc)
+```
+
+### CLI
 
 ```bash
+# Analyse d'un document
 doc-engine analyze cours.pdf
-doc-engine extract cours.pdf --format json
+
+# Export structuré
+doc-engine extract cours.pdf --format json --output cours.json
+
+# Liste des extracteurs disponibles
+doc-engine list
 ```
 
-## License
+## Plugins
+
+- `document-engine-tiptap` — export TipTap JSON pour éditeurs React
+- `document-engine-ai` — review IA (DeepSeek, OpenAI)
+
+## Formats supportés
+
+| Format | Extracteur | Statut |
+|--------|-----------|--------|
+| PDF | PyMuPDF + pdfplumber | ✅ |
+| DOCX | python-docx | ✅ |
+| PPTX | python-pptx | ✅ |
+| EPUB | (planifié) | 🚧 |
+| HTML | lxml | ✅ |
+| Markdown | markdown-it-py | ✅ |
+
+## Licence
 
 MIT

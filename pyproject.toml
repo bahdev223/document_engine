@@ -16,13 +16,13 @@ dependencies = [
     "pillow>=11.0.0",
     "markdown-it-py>=3.0.0",
     "lxml>=5.0.0",
-    "httpx>=0.28.0",
 ]
 
 [project.optional-dependencies]
-ai = ["openai>=1.0.0"]
-cli = ["typer>=0.15.0"]
-dev = ["pytest>=8.0.0", "pytest-asyncio>=0.24.0", "coverage>=7.0.0"]
+ai = ["openai>=1.0.0", "httpx>=0.28.0"]
+cli = ["typer>=0.15.0", "rich>=13.0.0"]
+tiptap = []  # TipTap JSON schema — no extra deps needed
+dev = ["pytest>=8.0.0", "coverage>=7.0.0"]
 
 [project.scripts]
 doc-engine = "document_engine.cli.main:app"

@@ -77,21 +77,22 @@ def extract(
     doc = result.document
 
     if format == "tiptap":
-        from document_engine.builders.tiptap import TipTapBuilder
-        builder = TipTapBuilder()
-        data = builder.build(doc)
+        try:
+            from document_engine.plugins.tiptap import TipTapExporter as TipTap
+            exporter = TipTap()
+        except ImportError:
+            console.print("[red]TipTap plugin not installed. Run: pip install document-engine-tiptap[/red]")
+            raise typer.Exit(1)
     elif format == "markdown":
-        from document_engine.builders.markdown import MarkdownBuilder
-        builder = MarkdownBuilder()
-        data = builder.build(doc)
+        from document_engine.exporters import MarkdownExporter as TipTap
+        exporter = TipTap()
     elif format == "html":
-        from document_engine.builders.html import HTMLBuilder
-        builder = HTMLBuilder()
-        data = builder.build(doc)
+        from document_engine.exporters import HTMLExporter as TipTap
+        exporter = TipTap()
     else:
-        from document_engine.builders.json import JSONBuilder
-        builder = JSONBuilder()
-        data = builder.build(doc)
+        from document_engine.exporters import JSONExporter as TipTap
+        exporter = TipTap()
+    data = exporter.build(doc)
 
     output.write_text(json.dumps(data, indent=2, ensure_ascii=False))
     console.print(f"[green]✓[/green] Exported to {output}")
@@ -110,7 +111,7 @@ def list():
     for name in list_analyzers():
         console.print(f"  • {name}")
 
-    console.print("\n[bold cyan]Builders disponibles :[/bold cyan]")
+    console.print("\n[bold cyan]Exporters disponibles :[/bold cyan]")
     for name in list_builders():
         console.print(f"  • {name}")
 
