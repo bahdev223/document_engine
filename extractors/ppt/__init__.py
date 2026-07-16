@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from io import BytesIO
+
 from pptx import Presentation
 
 from document_engine.models import Document, ImageElement, TableElement
@@ -10,6 +12,16 @@ from document_engine.core.registry import Extractor, register_extractor
 
 class PptxExtractor(Extractor):
     format = "pptx"
+
+    def extract_from_stream(self, stream: bytes, filename: str = "upload.pptx") -> Document:
+        prs = Presentation(BytesIO(stream))
+        document = Document(
+            title=Path(filename).stem,
+            file_path=filename,
+            file_format="pptx",
+            file_size_bytes=len(stream),
+        )
+        return self._process_pptx(prs, document)
 
     def extract(self, file_path: str) -> Document:
         prs = Presentation(file_path)
@@ -21,7 +33,9 @@ class PptxExtractor(Extractor):
             file_format="pptx",
             file_size_bytes=p.stat().st_size,
         )
+        return self._process_pptx(prs, document)
 
+    def _process_pptx(self, prs: Presentation, document: Document) -> Document:
         slides_text: list[str] = []
         for slide in prs.slides:
             slide_text: list[str] = []

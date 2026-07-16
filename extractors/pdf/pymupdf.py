@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 import fitz  # PyMuPDF
 
 from document_engine.models import (
-    Document, Chapter, ImageElement, TableElement, CodeBlock, Link, MathFormula,
+    Document, ImageElement, Link,
 )
 from document_engine.core.registry import Extractor, register_extractor
 
@@ -16,6 +15,17 @@ class PyMuPDFExtractor(Extractor):
 
     def supports(self, file_path: str) -> bool:
         return file_path.lower().endswith(".pdf")
+
+    def extract_from_stream(self, stream: bytes, filename: str = "upload.pdf") -> Document:
+        doc = fitz.open(stream=stream, filetype="pdf")
+        document = Document(
+            title=doc.metadata.get("title", Path(filename).stem),
+            file_path=filename,
+            file_format="pdf",
+            file_size_bytes=len(stream),
+            raw_metadata=dict(doc.metadata or {}),
+        )
+        return self._process_pages(doc, document)
 
     def extract(self, file_path: str) -> Document:
         doc = fitz.open(file_path)
@@ -27,14 +37,16 @@ class PyMuPDFExtractor(Extractor):
             file_size_bytes=p.stat().st_size,
             raw_metadata=dict(doc.metadata or {}),
         )
-        document.raw_metadata["page_count"] = len(doc)
+        return self._process_pages(doc, document)
 
+    def _process_pages(self, doc: fitz.Document, document: Document) -> Document:
+        document.raw_metadata["page_count"] = len(doc)
         full_text: list[str] = []
+
         for page_num, page in enumerate(doc, start=1):
-            text = page.get_text("text")
-            full_text.append(text)
-            images_on_page = page.get_images(full=True)
-            for img_index, img in enumerate(images_on_page):
+            full_text.append(page.get_text("text"))
+
+            for img_index, img in enumerate(page.get_images(full=True)):
                 xref = img[0]
                 try:
                     base_image = doc.extract_image(xref)
@@ -53,8 +65,7 @@ class PyMuPDFExtractor(Extractor):
                         page_number=page_num,
                     ))
 
-            links_on_page = page.get_links()
-            for link in links_on_page:
+            for link in page.get_links():
                 document.links.append(Link(
                     url=link.get("uri", ""),
                     text=link.get("text", ""),
