@@ -21,11 +21,21 @@ dependencies = [
 [project.optional-dependencies]
 ai = ["openai>=1.0.0", "httpx>=0.28.0"]
 cli = ["typer>=0.15.0", "rich>=13.0.0"]
-tiptap = []  # TipTap JSON schema — no extra deps needed
+tiptap = []
 dev = ["pytest>=8.0.0", "coverage>=7.0.0"]
 
 [project.scripts]
 doc-engine = "document_engine.cli.main:app"
 
 [tool.hatch.build.targets.wheel]
-packages = ["document_engine"]
+packages = ["src/document_engine"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src/**",
+    "/tests/**",
+    "/README.md",
+    "/LICENSE",
+    "/CHANGELOG.md",
+    "/pyproject.toml",
+]
